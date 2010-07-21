@@ -18,6 +18,6 @@ namespace :ssh do
     run "[ \`id -u\` != 0 ]" rescue abort "You're logging in as root. If I lock down ssh, I'll lock you out!"
     run "#{sudo} sed -i 's/^PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config"
     run "#{sudo} sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh/sshd_config"
-    run "#{sudo} service ssh restart"
+    run "#{sudo} /etc/init.d/ssh restart"
   end
 end
