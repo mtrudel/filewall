@@ -6,7 +6,7 @@ namespace :dnsmasq do
     
   desc "Apply the curernt dnsmasq config"
   task :restart do
-    run "#{sudo} dnsmasq restart"
+    run "#{sudo} /etc/init.d/dnsmasq restart"
   end
 end
   

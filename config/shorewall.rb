@@ -38,6 +38,6 @@ namespace :shorewall do
 
   desc "Apply the curernt shorewall config"
   task :restart do
-    run "#{sudo} shorewall restart"
+    run "#{sudo} /etc/init.d/shorewall restart"
   end
 end
