@@ -12,16 +12,24 @@ set :repository, "YOUR REPO PATH HERE"
 set :branch, "master" # You'll probably want to change this
 
 set :rule_timeout, 60 # How long wait before reverting rules
- 
+
+# You oughtn't need to change anything below here
+load 'config/shorewall' 
+load 'config/dnsmasq'
+load 'config/pptpd'
+load 'config/ssh'
+
 namespace :deploy do
   desc "Install the base packages we need"
   task :install_packages do
     AptCommand = "env DEBCONF_TERSE='yes' DEBIAN_PRIORITY='critical' DEBIAN_FRONTEND=noninteractive apt-get --force-yes -qyu"
     run "#{sudo} #{AptCommand} update"
-    run "#{sudo} #{AptCommand} install shorewall git-core"
+    run "#{sudo} #{AptCommand} install dnsmasq git-core pptpd shorewall"
     run "#{sudo} sed -i 's/^startup=0/startup=1/g' /etc/default/shorewall"
   end
   before "deploy:setup", "deploy:install_packages"
+  
+  after "deploy:setup", "ssh:show_warning"
 
   desc "Set up all the relevant directories"
   task :setup, :except => { :no_release => true } do
@@ -29,50 +37,21 @@ namespace :deploy do
     run "#{sudo} mkdir -p #{dirs.join(' ')}"
     run "#{sudo} chown #{user} #{dirs.join(' ')}"
   end
-  
+
   desc "Try the rules out before we commit the deployment"
   task :finalize_update do 
-    # shorewall.try throws if it encounters an error, which is what we want
+    # shorewall.try aborts if it encounters an error, which is what we want
     shorewall.try
   end
+  
+  after "deploy:symlink", "shorewall:symlink"
+  after "deploy:symlink", "dnsmasq:symlink"
+  after "deploy:symlink", "pptpd:symlink"
 
-  desc "Symlink shorewall config into current"
-  task :symlink_shorewall do
-    run "[ -d /etc/shorewall ] && #{sudo} rm -rf /etc/shorewall && #{sudo} ln -s #{deploy_to}/current/rules /etc/shorewall"
-  end  
-  after "deploy:symlink", "deploy:symlink_shorewall"
-
-  desc "Restart shorewall"
+  desc "Restart filewall"
   task :restart do
     shorewall.restart
+    dnsmasq.restart
+    pptpd.restart    
   end  
-end
-
-namespace :shorewall do
-  desc "Try out the config in via shorewall's try operation. Raises if it doesn't work"
-  task :try do
-    logger.important "
-    
-    #{'=' * 75}    
-  
-    We're now going to temporarily apply the new rules for a period of 
-    at most #{rule_timeout} seconds. The new rules will be rolled back 
-    after that time, and you'll be giventhe choice to apply them 
-    permanently, or revery them.
-  
-    #{'=' * 75}    
-    
-    Press any key when ready"
-    STDIN.getc
-    run "#{sudo} shorewall try #{current_release}/rules #{rule_timeout}"
-
-    # Ask the user if the new rules worked. If we raise here, it'll rollback 
-    # the entire config, leaving the existing rules unchanged
-    abort unless Capistrano::CLI.ui.agree("Do you want to permanently apply the new rules? ")
-  end  
-  
-  desc "Apply the curernt shorewall config"
-  task :restart do
-    run "#{sudo} shorewall restart"
-  end
 end

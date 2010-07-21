@@ -6,7 +6,7 @@ Forget about statefully configured menu driven firewalls; filewall is a file-bas
  
 Filewall deploys your rules with a dead-man switch so you'll never lock yourself out of your firewall again. If your rules accidentally send you up the bomb, just wait for the timeout and your old settings will be restored. 
 
-Coming soon, filewall will also let you manage some standard infrastructure daemons, most notably dnsmasq. This will make filewall your one-stop-shop for all your network infrastructure needs.
+Filewall also let you manage some standard infrastructure daemons, most notably dnsmasq. This will make filewall your one-stop-shop for all your network infrastructure needs.
 
 ### Usage
 
