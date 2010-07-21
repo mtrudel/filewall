@@ -17,7 +17,11 @@ namespace :shorewall do
     #{'=' * 75}    
     
     Press any key when ready, or press Ctrl+C to abort"
-    STDIN.getc
+    begin
+      STDIN.getc 
+    rescue Exception 
+      abort "Quitting due to user request"
+    end
     run "#{sudo} shorewall try #{current_release}/rules #{rule_timeout}"
 
     # Ask the user if the new rules worked. If we raise here, it'll rollback 
